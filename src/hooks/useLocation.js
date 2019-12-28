@@ -3,32 +3,36 @@ import { requestPermissionsAsync, watchPositionAsync, Accuracy } from 'expo-loca
 
 export default (shouldTrack, callback)=>{
     const [err, setError] = useState(null);
-    const [subscriber, setSubs] = useState(null);
-    const startWatching = async ()=>{
-        const {status} = await requestPermissionsAsync();
-        // console.log(status);
-        if(status == 'denied')
-            setError(status);
-        else{
-            const sub = await watchPositionAsync({
-                accuracy: Accuracy.BestForNavigation,
-                timeInterval: 1000,
-                distanceInterval: 10
-            }, 
-            callback
-            )
-            setSubs(sub);
-        }
-    }
 
     useEffect(()=>{
+        let subscriber;
+        const startWatching = async ()=>{
+            const {status} = await requestPermissionsAsync();
+            // console.log(status);
+            if(status == 'denied')
+                setError(status);
+            else{
+                const subscriber = await watchPositionAsync({
+                    accuracy: Accuracy.BestForNavigation,
+                    timeInterval: 1000,
+                    distanceInterval: 10
+                }, 
+                callback
+                )
+            }
+        }
         if(shouldTrack)
             startWatching();
         else{
-            subscriber.remove();
-            setSubs(null);
+            if(subscriber)
+                subscriber.remove();
+            subscriber = null;
         }
-    }, [shouldTrack])
+        return ()=>{
+            if(subscriber)
+                subscriber.remove();
+        }
+    }, [shouldTrack, callback])
 
     return [err];
 
